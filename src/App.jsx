@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 const STORAGE_KEY = "lecturas_v1";
-const PIN_CORRECTO = "Pr0t3c$10nJ44"; // 🔑 Cambia "1234" por la clave que quieras usar
+const PIN_CORRECTO = "1234"; // 🔑 Cambia este PIN por el que prefieras
 
 export default function App() {
   // 1. Estados de Autenticación
@@ -196,7 +196,7 @@ export default function App() {
 
   const readCount = filteredUsers.filter((u) => state.reads[u.no]).length;
 
-  // 🔒 VISTA SI NO SE HA AUTENTICADO (DENTRO DE APP)
+  // 🔒 VISTA SI NO SE HA AUTENTICADO
   if (!autenticado) {
     return (
       <div style={{ maxWidth: 320, margin: "80px auto", textAlign: "center", padding: 20, fontFamily: "sans-serif" }}>
@@ -248,7 +248,7 @@ export default function App() {
     );
   }
 
-  // 💧 VISTA PRINCIPAL (SI YA SE AUTENTICÓ)
+  // 💧 VISTA PRINCIPAL
   return (
     <div style={styles.container}>
       <h1 style={{ fontSize: 18, margin: "4px 0 10px" }}>
@@ -261,6 +261,12 @@ export default function App() {
           onClick={() => setTab(1)}
         >
           Lecturas
+        </button>
+        <button
+          style={{ ...styles.btn, ...(tab === 4 ? styles.btnOn : {}) }}
+          onClick={() => setTab(4)}
+        >
+          📊 Dashboard
         </button>
         <button
           style={{ ...styles.btn, ...(tab === 2 ? styles.btnOn : {}) }}
@@ -382,6 +388,71 @@ export default function App() {
         </section>
       )}
 
+      {/* PESTAÑA 4: DASHBOARD / ESTADÍSTICAS */}
+      {tab === 4 && (
+        <section>
+          <h2 style={{ fontSize: 16, marginBottom: 12 }}>Resumen de Avance</h2>
+          
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
+            <div style={styles.cardMetric}>
+              <div style={styles.mu}>Total Usuarios</div>
+              <div style={{ fontSize: 22, fontWeight: "bold" }}>{state.users.length}</div>
+            </div>
+            <div style={styles.cardMetric}>
+              <div style={styles.mu}>Lecturas Tomadas</div>
+              <div style={{ fontSize: 22, fontWeight: "bold", color: "#13804a" }}>
+                {Object.keys(state.reads).length}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ ...styles.item, marginBottom: 16 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6, fontSize: 14 }}>
+              <span>Progreso general</span>
+              <b>
+                {state.users.length > 0
+                  ? Math.round((Object.keys(state.reads).length / state.users.length) * 100)
+                  : 0}
+                %
+              </b>
+            </div>
+            <div style={{ width: "100%", background: "#d9dde3", borderRadius: 8, height: 12, overflow: "hidden" }}>
+              <div
+                style={{
+                  width: `${
+                    state.users.length > 0
+                      ? (Object.keys(state.reads).length / state.users.length) * 100
+                      : 0
+                  }%`,
+                  background: "#0b6fd6",
+                  height: "100%",
+                  transition: "width 0.3s ease",
+                }}
+              />
+            </div>
+          </div>
+
+          <h3 style={{ fontSize: 15, marginBottom: 8 }}>Avance por Caserío</h3>
+          {caserios.map((c) => {
+            const usersInCas = state.users.filter((u) => u.cas === c);
+            const readInCas = usersInCas.filter((u) => state.reads[u.no]).length;
+            const porcentaje = usersInCas.length > 0 ? Math.round((readInCas / usersInCas.length) * 100) : 0;
+
+            return (
+              <div key={c} style={{ ...styles.item, padding: 8, marginBottom: 6 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, marginBottom: 4 }}>
+                  <span><b>{c}</b></span>
+                  <span style={{ color: "#6b7280" }}>{readInCas} / {usersInCas.length} ({porcentaje}%)</span>
+                </div>
+                <div style={{ width: "100%", background: "#d9dde366", borderRadius: 6, height: 6 }}>
+                  <div style={{ width: `${porcentaje}%`, background: "#13804a", height: "100%", borderRadius: 6 }} />
+                </div>
+              </div>
+            );
+          })}
+        </section>
+      )}
+
       {/* PESTAÑA 2: IMPORTAR */}
       {tab === 2 && (
         <section>
@@ -446,7 +517,7 @@ const styles = {
     padding: 12,
     fontFamily: "system-ui, -apple-system, sans-serif",
   },
-  nav: { display: "flex", gap: 6, marginBottom: 10 },
+  nav: { display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap" },
   row: { display: "flex", gap: 8, marginBottom: 8 },
   btn: {
     flex: 1,
@@ -454,7 +525,7 @@ const styles = {
     borderRadius: 10,
     border: "1px solid #d9dde3",
     background: "#fff",
-    fontSize: 15,
+    fontSize: 14,
     cursor: "pointer",
   },
   btnOn: { background: "#0b6fd6", color: "#fff", borderColor: "#0b6fd6" },
@@ -494,6 +565,13 @@ const styles = {
     cursor: "pointer",
   },
   editBox: { marginTop: 10, display: "grid", gap: 8 },
+  cardMetric: {
+    background: "#fff",
+    border: "1px solid #d9dde3",
+    borderRadius: 12,
+    padding: 12,
+    textAlign: "center",
+  },
   mu: { color: "#6b7280", fontSize: 13 },
   ok: { color: "#13804a", fontWeight: "bold" },
   msg: { fontSize: 13, color: "#6b7280", minHeight: 18, marginTop: 4 },
