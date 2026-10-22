@@ -21,6 +21,7 @@ export default function App() {
 
   const [caserio, setCaserio] = useState("");
   const [busqueda, setBusqueda] = useState("");
+  const [filtroEstado, setFiltroEstado] = useState("todos"); // "todos" | "pendientes" | "leidos"
   const [activeUser, setActiveUser] = useState(null);
   const [lecturaInput, setLecturaInput] = useState("");
   const [obsInput, setObsInput] = useState("");
@@ -186,15 +187,21 @@ export default function App() {
     if (tab === 3) generateExport();
   }, [tab, state]);
 
-  // Filtros de usuarios
+  // Filtros de usuarios (Caserío, Búsqueda y Estado de Lectura)
   const filteredUsers = state.users.filter((u) => {
     const matchesCaserio = !caserio || u.cas === caserio;
     const q = busqueda.toLowerCase();
     const matchesQuery = !q || `${u.no} ${u.nom} ${u.med}`.toLowerCase().includes(q);
-    return matchesCaserio && matchesQuery;
+    
+    const isRead = !!state.reads[u.no];
+    let matchesEstado = true;
+    if (filtroEstado === "pendientes") matchesEstado = !isRead;
+    if (filtroEstado === "leidos") matchesEstado = isRead;
+
+    return matchesCaserio && matchesQuery && matchesEstado;
   });
 
-  const readCount = filteredUsers.filter((u) => state.reads[u.no]).length;
+  const readCount = state.users.filter((u) => state.reads[u.no]).length;
 
   // 🔒 VISTA SI NO SE HA AUTENTICADO
   if (!autenticado) {
@@ -307,14 +314,44 @@ export default function App() {
             />
           </div>
 
+          {/* BOTONES DE FILTRO RÁPIDO (TODOS / PENDIENTES / LEÍDOS) */}
+          <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
+            <button
+              style={{ ...styles.btnFilter, ...(filtroEstado === "todos" ? styles.btnFilterActive : {}) }}
+              onClick={() => setFiltroEstado("todos")}
+            >
+              Todos ({state.users.length})
+            </button>
+            <button
+              style={{
+                ...styles.btnFilter,
+                ...(filtroEstado === "pendientes" ? styles.btnFilterActive : {}),
+              }}
+              onClick={() => setFiltroEstado("pendientes")}
+            >
+              Pendientes ({state.users.length - readCount})
+            </button>
+            <button
+              style={{
+                ...styles.btnFilter,
+                ...(filtroEstado === "leidos" ? styles.btnFilterActive : {}),
+              }}
+              onClick={() => setFiltroEstado("leidos")}
+            >
+              Leídos ({readCount})
+            </button>
+          </div>
+
           <div style={styles.msg}>
-            {state.users.length > 0 && `${readCount} de ${filteredUsers.length} leídos`}
+            {state.users.length > 0 && `Mostrando ${filteredUsers.length} usuarios`}
           </div>
 
           {state.users.length === 0 ? (
             <p style={styles.mu}>
               Aún no hay usuarios. Ve a <b>Importar</b> y pega tu listado.
             </p>
+          ) : filteredUsers.length === 0 ? (
+            <p style={styles.mu}>No hay usuarios que coincidan con este filtro.</p>
           ) : (
             filteredUsers.map((u) => {
               const r = state.reads[u.no];
@@ -530,6 +567,22 @@ const styles = {
   },
   btnOn: { background: "#0b6fd6", color: "#fff", borderColor: "#0b6fd6" },
   btnPrimary: {
+    background: "#0b6fd6",
+    color: "#fff",
+    borderColor: "#0b6fd6",
+    fontWeight: "bold",
+  },
+  btnFilter: {
+    flex: 1,
+    padding: "8px 4px",
+    borderRadius: 8,
+    border: "1px solid #d9dde3",
+    background: "#fff",
+    fontSize: 12,
+    cursor: "pointer",
+    textAlign: "center",
+  },
+  btnFilterActive: {
     background: "#0b6fd6",
     color: "#fff",
     borderColor: "#0b6fd6",
