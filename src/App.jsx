@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 const STORAGE_KEY = "lecturas_v1";
 const PIN_CORRECTO = "1234"; // 🔑 Cambia este PIN por el que prefieras
 
+const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxigieAgwwA-huTB3_kTBDe_Xag2DIGBzAG4UEAcAd2ds355MuuyBCuPIDeXSxQWfXnOw/exec";
+
 export default function App() {
   // 1. Estados de Autenticación
   const [pinIngresado, setPinIngresado] = useState("");
@@ -76,6 +78,34 @@ export default function App() {
     }
   };
 
+  // Función para enviar respaldo en segundo plano a Google Sheets
+  const sendToGoogleSheets = async (user, readRecord) => {
+    if (!WEBHOOK_URL || WEBHOOK_URL.includes("PEGA_AQUI_TU_URL")) return;
+
+    try {
+      const payload = {
+        no: user.no,
+        nom: user.nom,
+        med: user.med || "",
+        cas: user.cas || "",
+        lec: readRecord.lec,
+        obs: readRecord.obs,
+        lat: readRecord.lat || "",
+        lng: readRecord.lng || "",
+        t: readRecord.t
+      };
+
+      await fetch(WEBHOOK_URL, {
+        method: "POST",
+        mode: "no-cors", // Requerido por Apps Script para peticiones desde el navegador
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+    } catch (error) {
+      console.error("Error al respaldar en Google Sheets:", error);
+    }
+  };
+
   const handleSaveRead = async (user) => {
     if (!lecturaInput.trim()) {
       setMsgGps("Escribe la lectura.");
@@ -112,13 +142,16 @@ export default function App() {
       reads: { ...prev.reads, [user.no]: newRecord },
     }));
 
+    // 🚀 RESPALDO AUTOMÁTICO A GOOGLE SHEETS
+    sendToGoogleSheets(user, newRecord);
+
     setIsGpsLoading(false);
 
     if (gpsData && gpsData.lat !== undefined) {
       setActiveUser(null);
     } else {
       setMsgGps(
-        `Guardado SIN GPS (${gpsData?.err || "no disponible"}). Activa la ubicación y vuelve a guardar.`
+        `Guardado SIN GPS (${gpsData?.err || "no disponible"}). Respaldado en nube.`
       );
     }
   };
@@ -314,7 +347,7 @@ export default function App() {
             />
           </div>
 
-          {/* BOTONES DE FILTRO RÁPIDO (TODOS / PENDIENTES / LEÍDOS) */}
+          {/* BOTONES DE FILTRO RÁPIDO */}
           <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
             <button
               style={{ ...styles.btnFilter, ...(filtroEstado === "todos" ? styles.btnFilterActive : {}) }}
