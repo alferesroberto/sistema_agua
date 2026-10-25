@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 const STORAGE_KEY = "lecturas_v1";
 const PIN_CORRECTO = "1234"; // 🔑 Cambia este PIN por el que prefieras
-
-const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxigieAgwwA-huTB3_kTBDe_Xag2DIGBzAG4UEAcAd2ds355MuuyBCuPIDeXSxQWfXnOw/exec";
+const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxigieAgwwA-huTB3_kTBDe_Xag2DIGBzAG4UEAcAd2ds355MuuyBCuPIDeXSxQWfXnOw/exec"; 
 
 export default function App() {
   // 1. Estados de Autenticación
@@ -24,6 +23,11 @@ export default function App() {
   const [caserio, setCaserio] = useState("");
   const [busqueda, setBusqueda] = useState("");
   const [filtroEstado, setFiltroEstado] = useState("todos"); // "todos" | "pendientes" | "leidos"
+  
+  // 📄 Estados de Paginación
+  const [paginaActual, setPaginaActual] = useState(1);
+  const porPagina = 15;
+
   const [activeUser, setActiveUser] = useState(null);
   const [lecturaInput, setLecturaInput] = useState("");
   const [obsInput, setObsInput] = useState("");
@@ -97,7 +101,7 @@ export default function App() {
 
       await fetch(WEBHOOK_URL, {
         method: "POST",
-        mode: "no-cors", // Requerido por Apps Script para peticiones desde el navegador
+        mode: "no-cors",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
@@ -142,9 +146,7 @@ export default function App() {
       reads: { ...prev.reads, [user.no]: newRecord },
     }));
 
-    // 🚀 RESPALDO AUTOMÁTICO A GOOGLE SHEETS
     sendToGoogleSheets(user, newRecord);
-
     setIsGpsLoading(false);
 
     if (gpsData && gpsData.lat !== undefined) {
@@ -184,12 +186,14 @@ export default function App() {
     setState((prev) => ({ ...prev, users: newUsers }));
     setMsgImport(`${count} usuarios importados.`);
     setImportText("");
+    setPaginaActual(1);
   };
 
   const handleClearAll = () => {
     if (window.confirm("¿Borrar usuarios y lecturas de este dispositivo?")) {
       setState({ users: [], reads: {} });
       setMsgImport("Datos borrados.");
+      setPaginaActual(1);
     }
   };
 
@@ -233,6 +237,11 @@ export default function App() {
 
     return matchesCaserio && matchesQuery && matchesEstado;
   });
+
+  // Cálculo de Paginación
+  const totalPaginas = Math.ceil(filteredUsers.length / porPagina) || 1;
+  const indiceInicio = (paginaActual - 1) * porPagina;
+  const usuariosVisibles = filteredUsers.slice(indiceInicio, indiceInicio + porPagina);
 
   const readCount = state.users.filter((u) => state.reads[u.no]).length;
 
@@ -329,7 +338,10 @@ export default function App() {
             <select
               style={styles.input}
               value={caserio}
-              onChange={(e) => setCaserio(e.target.value)}
+              onChange={(e) => {
+                setCaserio(e.target.value);
+                setPaginaActual(1);
+              }}
             >
               <option value="">Todos los caseríos</option>
               {caserios.map((c) => (
@@ -343,7 +355,10 @@ export default function App() {
               style={styles.input}
               placeholder="Buscar usuario, No. o medidor"
               value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
+              onChange={(e) => {
+                setBusqueda(e.target.value);
+                setPaginaActual(1);
+              }}
             />
           </div>
 
@@ -351,7 +366,7 @@ export default function App() {
           <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
             <button
               style={{ ...styles.btnFilter, ...(filtroEstado === "todos" ? styles.btnFilterActive : {}) }}
-              onClick={() => setFiltroEstado("todos")}
+              onClick={() => { setFiltroEstado("todos"); setPaginaActual(1); }}
             >
               Todos ({state.users.length})
             </button>
@@ -360,7 +375,7 @@ export default function App() {
                 ...styles.btnFilter,
                 ...(filtroEstado === "pendientes" ? styles.btnFilterActive : {}),
               }}
-              onClick={() => setFiltroEstado("pendientes")}
+              onClick={() => { setFiltroEstado("pendientes"); setPaginaActual(1); }}
             >
               Pendientes ({state.users.length - readCount})
             </button>
@@ -369,14 +384,14 @@ export default function App() {
                 ...styles.btnFilter,
                 ...(filtroEstado === "leidos" ? styles.btnFilterActive : {}),
               }}
-              onClick={() => setFiltroEstado("leidos")}
+              onClick={() => { setFiltroEstado("leidos"); setPaginaActual(1); }}
             >
               Leídos ({readCount})
             </button>
           </div>
 
           <div style={styles.msg}>
-            {state.users.length > 0 && `Mostrando ${filteredUsers.length} usuarios`}
+            {state.users.length > 0 && `Mostrando ${filteredUsers.length} usuarios (Pág. ${paginaActual} de ${totalPaginas})`}
           </div>
 
           {state.users.length === 0 ? (
@@ -386,74 +401,105 @@ export default function App() {
           ) : filteredUsers.length === 0 ? (
             <p style={styles.mu}>No hay usuarios que coincidan con este filtro.</p>
           ) : (
-            filteredUsers.map((u) => {
-              const r = state.reads[u.no];
-              const isOpen = activeUser === u.no;
-              return (
-                <div key={u.no} style={styles.item}>
-                  <div style={styles.itemHeader} onClick={() => toggleUserEdit(u)}>
-                    <div>
-                      <b>{u.no}</b> {u.nom}
-                      <div style={styles.mu}>
-                        Medidor {u.med || "—"} · {u.cas}
+            <>
+              {usuariosVisibles.map((u) => {
+                const r = state.reads[u.no];
+                const isOpen = activeUser === u.no;
+                return (
+                  <div key={u.no} style={styles.item}>
+                    <div style={styles.itemHeader} onClick={() => toggleUserEdit(u)}>
+                      <div>
+                        <b>{u.no}</b> {u.nom}
+                        <div style={styles.mu}>
+                          Medidor {u.med || "—"} · {u.cas}
+                        </div>
+                      </div>
+                      <div style={styles.ok}>
+                        {r && (
+                          <>
+                            {r.lec} {r.lat ? "📍" : "⚠️"}
+                            {u.ant !== "" && u.ant !== undefined && (
+                              <div style={styles.mu}>+{r.lec - u.ant} m³</div>
+                            )}
+                          </>
+                        )}
                       </div>
                     </div>
-                    <div style={styles.ok}>
-                      {r && (
-                        <>
-                          {r.lec} {r.lat ? "📍" : "⚠️"}
-                          {u.ant !== "" && u.ant !== undefined && (
-                            <div style={styles.mu}>+{r.lec - u.ant} m³</div>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  </div>
 
-                  {isOpen && (
-                    <div style={styles.editBox}>
-                      {u.ant !== "" && u.ant !== undefined && (
-                        <div style={styles.mu}>
-                          Lectura anterior: <b>{u.ant}</b>
-                        </div>
-                      )}
-                      <input
-                        style={styles.input}
-                        type="number"
-                        inputMode="numeric"
-                        placeholder="Lectura actual"
-                        value={lecturaInput}
-                        onChange={(e) => setLecturaInput(e.target.value)}
-                      />
-                      <input
-                        style={styles.input}
-                        placeholder="Observaciones"
-                        value={obsInput}
-                        onChange={(e) => setObsInput(e.target.value)}
-                      />
-                      <button
-                        style={{ ...styles.btn, ...styles.btnPrimary }}
-                        disabled={isGpsLoading}
-                        onClick={() => handleSaveRead(u)}
-                      >
-                        {isGpsLoading ? "Obteniendo GPS…" : "Guardar con GPS"}
-                      </button>
-                      <div style={styles.msg}>{msgGps}</div>
-                      {r?.lat && (
-                        <a
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          href={`https://www.google.com/maps?q=${r.lat},${r.lng}`}
-                          style={{ color: "#0b6fd6" }}
+                    {isOpen && (
+                      <div style={styles.editBox}>
+                        {u.ant !== "" && u.ant !== undefined && (
+                          <div style={styles.mu}>
+                            Lectura anterior: <b>{u.ant}</b>
+                          </div>
+                        )}
+                        <input
+                          style={styles.input}
+                          type="number"
+                          inputMode="numeric"
+                          placeholder="Lectura actual"
+                          value={lecturaInput}
+                          onChange={(e) => setLecturaInput(e.target.value)}
+                        />
+                        <input
+                          style={styles.input}
+                          placeholder="Observaciones"
+                          value={obsInput}
+                          onChange={(e) => setObsInput(e.target.value)}
+                        />
+                        <button
+                          style={{ ...styles.btn, ...styles.btnPrimary }}
+                          disabled={isGpsLoading}
+                          onClick={() => handleSaveRead(u)}
                         >
-                          Ver ubicación (±{r.acc} m)
-                        </a>
-                      )}
-                    </div>
-                  )}
+                          {isGpsLoading ? "Obteniendo GPS…" : "Guardar con GPS"}
+                        </button>
+                        <div style={styles.msg}>{msgGps}</div>
+                        {r?.lat && (
+                          <a
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            href={`https://www.google.com/maps?q=${r.lat},${r.lng}`}
+                            style={{ color: "#0b6fd6" }}
+                          >
+                            Ver ubicación (±{r.acc} m)
+                          </a>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+
+              {/* CONTROLES DE PAGINACIÓN */}
+              {totalPaginas > 1 && (
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "14px 0", gap: 8 }}>
+                  <button
+                    style={{ ...styles.btn, opacity: paginaActual === 1 ? 0.4 : 1 }}
+                    disabled={paginaActual === 1}
+                    onClick={() => {
+                      setPaginaActual(prev => Math.max(prev - 1, 1));
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                  >
+                    ⬅️ Anterior
+                  </button>
+                  <span style={{ fontSize: 13, color: "#6b7280", fontWeight: "bold" }}>
+                    {paginaActual} / {totalPaginas}
+                  </span>
+                  <button
+                    style={{ ...styles.btn, opacity: paginaActual === totalPaginas ? 0.4 : 1 }}
+                    disabled={paginaActual === totalPaginas}
+                    onClick={() => {
+                      setPaginaActual(prev => Math.min(prev + 1, totalPaginas));
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                  >
+                    Siguiente ➡️
+                  </button>
                 </div>
-              );
-            })
+              )}
+            </>
           )}
         </section>
       )}
