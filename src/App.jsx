@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 const STORAGE_KEY = "lecturas_v1";
-const PIN_CORRECTO = "1234"; // 🔑 Cambia este PIN por el que prefieras
+const PIN_CORRECTO = "1234"; // 🔑 PIN de acceso al sistema
 const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxigieAgwwA-huTB3_kTBDe_Xag2DIGBzAG4UEAcAd2ds355MuuyBCuPIDeXSxQWfXnOw/exec"; 
 
 export default function App() {
@@ -36,7 +36,6 @@ export default function App() {
 
   const [importText, setImportText] = useState("");
   const [msgImport, setMsgImport] = useState("");
-  const [csvOutput, setCsvOutput] = useState("");
   const [msgExport, setMsgExport] = useState("");
 
   // Guardar en localStorage
@@ -196,33 +195,6 @@ export default function App() {
       setPaginaActual(1);
     }
   };
-
-  const generateExport = () => {
-    const q = (v) => '"' + String(v ?? "").replace(/"/g, '""') + '"';
-    const headers = [
-      "No", "Usuario", "Zona", "Medidor", "Caserio", 
-      "Lectura", "Anterior", "Consumo", "Observaciones", 
-      "Latitud", "Longitud", "Precision_m", "FechaHora"
-    ];
-
-    const rows = state.users
-      .filter((u) => state.reads[u.no])
-      .map((u) => {
-        const r = state.reads[u.no];
-        return [
-          u.no, u.nom, u.zona, u.med, u.cas, r.lec,
-          u.ant ?? "", u.ant ? r.lec - u.ant : "", r.obs,
-          r.lat, r.lng, r.acc, r.t,
-        ].map(q).join(",");
-      });
-
-    setCsvOutput([headers.join(","), ...rows].join("\n"));
-    setMsgExport(`${rows.length} lecturas.`);
-  };
-
-  useEffect(() => {
-    if (tab === 3) generateExport();
-  }, [tab, state]);
 
   // Filtros de usuarios (Caserío, Búsqueda y Estado de Lectura)
   const filteredUsers = state.users.filter((u) => {
@@ -601,25 +573,47 @@ export default function App() {
       {tab === 3 && (
         <section>
           <p style={styles.mu}>
-            CSV con lectura, latitud, longitud, precisión (m) y fecha/hora.
+            Descarga un archivo CSV con las <b>{state.users.filter((u) => state.reads[u.no]).length} lecturas</b> realizadas hasta el momento (con GPS, fecha y hora).
           </p>
-          <textarea style={styles.textarea} readOnly value={csvOutput} />
-          <div style={{ ...styles.row, marginTop: 8 }}>
+          
+          <div style={{ ...styles.row, marginTop: 16 }}>
             <button
-              style={{ ...styles.btn, ...styles.btnPrimary }}
-              onClick={async () => {
-                try {
-                  await navigator.clipboard.writeText(csvOutput);
-                  setMsgExport("Copiado al portapapeles.");
-                } catch {
-                  setMsgExport("Selecciona y copia manualmente.");
-                }
+              style={{ ...styles.btn, ...styles.btnPrimary, padding: 14, fontSize: 16 }}
+              onClick={() => {
+                const q = (v) => '"' + String(v ?? "").replace(/"/g, '""') + '"';
+                const headers = [
+                  "No", "Usuario", "Zona", "Medidor", "Caserio", 
+                  "Lectura", "Anterior", "Consumo", "Observaciones", 
+                  "Latitud", "Longitud", "Precision_m", "FechaHora"
+                ];
+
+                const readUsers = state.users.filter((u) => state.reads[u.no]);
+                const rows = readUsers.map((u) => {
+                  const r = state.reads[u.no];
+                  return [
+                    u.no, u.nom, u.zona, u.med, u.cas, r.lec,
+                    u.ant ?? "", u.ant ? r.lec - u.ant : "", r.obs,
+                    r.lat, r.lng, r.acc, r.t,
+                  ].map(q).join(",");
+                });
+
+                const csvContent = [headers.join(","), ...rows].join("\n");
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.setAttribute("href", url);
+                link.setAttribute("download", `lecturas_respaldo_${new Date().toISOString().slice(0,10)}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                setMsgExport(`¡Archivo descargado con éxito (${readUsers.length} lecturas)!`);
               }}
             >
-              Copiar CSV
+              📥 Descargar Archivo CSV
             </button>
           </div>
-          <div style={styles.msg}>{msgExport}</div>
+          <div style={{ ...styles.msg, textAlign: "center", fontWeight: "bold", color: "#13804a", marginTop: 10 }}>{msgExport}</div>
         </section>
       )}
     </div>
