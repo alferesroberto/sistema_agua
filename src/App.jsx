@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 const STORAGE_KEY = "lecturas_v1";
-const PIN_CORRECTO = "1234"; // 🔑 PIN de acceso al sistema
+const PIN_CORRECTO = "abcd"; // 🔑 PIN de acceso al sistema
 const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxigieAgwwA-huTB3_kTBDe_Xag2DIGBzAG4UEAcAd2ds355MuuyBCuPIDeXSxQWfXnOw/exec"; 
 
 export default function App() {
