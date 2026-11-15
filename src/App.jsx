@@ -100,7 +100,7 @@ function AppAutenticada({ onCerrarSesion }) {
         porcentajeAvance={datos.porcentajeAvance}
         casosAtencion={datos.casosAtencion.length}
         onActualizar={datos.cargarTodo}
-        onCerrarSesion={handleCerrarSesion}
+        onCerrarSesion={onCerrarSesion}
       />
 
       {vistaActiva === 'ruta' && (
