@@ -14,6 +14,9 @@ export default function App() {
   const [foto1, setFoto1] = useState(null);
   const [foto2, setFoto2] = useState(null);
   const [observaciones, setObservaciones] = useState('');
+  
+  // Estado para el histórico de consumo de la acometida seleccionada
+  const [historicoConsumo, setHistoricoConsumo] = useState([]);
 
   // 1. Cargar datos iniciales desde Supabase al abrir la app
   useEffect(() => {
@@ -23,23 +26,17 @@ export default function App() {
   async function fetchDatosSupabase() {
     setLoading(true);
     try {
-      // 1. Cargar zonas
       const { data: dataZonas } = await supabase.from('zonas').select('*');
       setZonas(dataZonas || []);
 
-      // 2. Cargar caseríos
       const { data: dataCaserios } = await supabase.from('caserios').select('*');
       setCaserios(dataCaserios || []);
 
-      // 3. Cargar beneficiarios directamente
       const { data: dataBeneficiarios } = await supabase.from('beneficiarios').select('*');
       
-      // 4. Cargar acometidas y unirlas en JavaScript de forma segura
       const { data: dataAcometidas, error: errAcometidas } = await supabase.from('acometidas').select('*');
-      
       if (errAcometidas) throw errAcometidas;
 
-      // Unir los datos en memoria para el selector
       const acometidasCompletas = (dataAcometidas || []).map(acometida => {
         const beneficiario = (dataBeneficiarios || []).find(b => b.id === acometida.beneficiario_id);
         const caserio = (dataCaserios || []).find(c => c.id === acometida.caserio_id);
@@ -60,7 +57,32 @@ export default function App() {
     }
   }
 
-  // 2. Función para subir fotos a Supabase Storage y guardar la lectura
+  // 2. Función para cargar el histórico de los últimos meses de la acometida
+  async function cargarHistorico(acometidaId) {
+    if (!acometidaId) {
+      setHistoricoConsumo([]);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('lecturas_mensuales')
+        .select('periodo_mes, periodo_anio, consumo_m3')
+        .eq('acometida_id', acometidaId)
+        .order('periodo_anio', { ascending: false })
+        .order('periodo_mes', { ascending: false })
+        .limit(4); // Últimos 4 meses
+
+      if (error) throw error;
+      // Invertimos para que queden cronológicamente de más antiguo a más reciente en la gráfica
+      setHistoricoConsumo(data ? data.reverse() : []);
+    } catch (error) {
+      console.error("Error al cargar histórico de consumo:", error);
+      setHistoricoConsumo([]);
+    }
+  }
+
+  // 3. Función para subir fotos a Supabase Storage y guardar la lectura
   async function handleGuardarLectura(e) {
     e.preventDefault();
     if (!selectedAcometida || !lecturaActual) {
@@ -72,7 +94,6 @@ export default function App() {
       let foto1Url = null;
       let foto2Url = null;
 
-      // Subir Foto 1 si existe
       if (foto1) {
         const fileName1 = `lecturas/${selectedAcometida.id}_${Date.now()}_1.jpg`;
         const { error: err1 } = await supabase.storage.from('fotos_medidores').upload(fileName1, foto1);
@@ -82,7 +103,6 @@ export default function App() {
         }
       }
 
-      // Subir Foto 2 si existe
       if (foto2) {
         const fileName2 = `lecturas/${selectedAcometida.id}_${Date.now()}_2.jpg`;
         const { error: err2 } = await supabase.storage.from('fotos_medidores').upload(fileName2, foto2);
@@ -92,16 +112,21 @@ export default function App() {
         }
       }
 
-      // Insertar en la tabla lecturas_mensuales
       const periodoMes = new Date().getMonth() + 1;
       const periodoAnio = new Date().getFullYear();
+
+      // Cálculo del consumo en m3 restando lectura actual menos la base anterior
+      const lecturaAnt = selectedAcometida.lectura_base || 0;
+      const lecturaActNum = parseFloat(lecturaActual);
+      const consumoCalculado = lecturaActNum - lecturaAnt;
 
       const { error: insertError } = await supabase.from('lecturas_mensuales').insert([{
         acometida_id: selectedAcometida.id,
         periodo_mes: periodoMes,
         periodo_anio: periodoAnio,
-        lectura_anterior: selectedAcometida.lectura_base || 0,
-        lectura_actual: parseFloat(lecturaActual),
+        lectura_anterior: lecturaAnt,
+        lectura_actual: lecturaActNum,
+        consumo_m3: consumoCalculado >= 0 ? consumoCalculado : 0,
         estado_medidor_reportado: estadoMedidor,
         observaciones: observaciones,
         foto_1_url: foto1Url,
@@ -110,19 +135,18 @@ export default function App() {
 
       if (insertError) throw insertError;
 
-      // Actualizar la lectura base en la tabla acometidas para el siguiente mes
       await supabase.from('acometidas')
-        .update({ lectura_base: parseFloat(lecturaActual), estado_medidor: estadoMedidor })
+        .update({ lectura_base: lecturaActNum, estado_medidor: estadoMedidor })
         .eq('id', selectedAcometida.id);
 
       alert("¡Lectura guardada y sincronizada con Supabase exitosamente!");
       
-      // Limpiar formulario
       setLecturaActual('');
       setFoto1(null);
       setFoto2(null);
-      setObservaciones(null);
+      setObservaciones('');
       setSelectedAcometida(null);
+      setHistoricoConsumo([]);
       fetchDatosSupabase();
 
     } catch (error) {
@@ -132,6 +156,9 @@ export default function App() {
   }
 
   if (loading) return <div style={{ padding: 20 }}>Conectando con Supabase y cargando datos...</div>;
+
+  const nombresMeses = ['', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+  const maxConsumo = Math.max(...historicoConsumo.map(item => Number(item.consumo_m3) || 0), 1);
 
   return (
     <div style={{ padding: 20, maxWidth: 600, margin: '0 auto', fontFamily: 'sans-serif' }}>
@@ -145,8 +172,9 @@ export default function App() {
             onChange={(e) => {
               const encontrada = acometidas.find(a => a.id == e.target.value);
               setSelectedAcometida(encontrada);
+              cargarHistorico(encontrada ? encontrada.id : null);
             }}
-            defaultValue=""
+            value={selectedAcometida ? selectedAcometida.id : ""}
           >
             <option value="" disabled>Selecciona un servicio...</option>
             {acometidas.map(a => (
@@ -159,8 +187,48 @@ export default function App() {
 
         {selectedAcometida && (
           <div style={{ background: '#f3f4f6', padding: 12, borderRadius: 8, fontSize: 14 }}>
-            <p><b>Caserío:</b> {selectedAcometida.caserios?.nombre_caserio}</p>
-            <p><b>Lectura Anterior (Base):</b> {selectedAcometida.lectura_base}</p>
+            <p style={{ margin: '0 0 4px 0' }}><b>Caserío:</b> {selectedAcometida.caserios?.nombre_caserio}</p>
+            <p style={{ margin: '0 0 10px 0' }}><b>Lectura Anterior (Base):</b> {selectedAcometida.lectura_base}</p>
+            
+            {/* MINI GRÁFICA DE HISTÓRICO DE CONSUMO */}
+            <div style={{ borderTop: '1px solid #d1d5db', paddingTop: '10px', marginTop: '8px' }}>
+              <p style={{ margin: '0 0 6px 0', fontSize: '0.8rem', fontWeight: 'bold', color: '#374151', textAlign: 'center' }}>
+                Histórico de Consumo (Últimos Meses)
+              </p>
+
+              {historicoConsumo.length === 0 ? (
+                <p style={{ fontSize: '0.75rem', color: '#6b7280', textAlign: 'center', margin: 0 }}>
+                  No hay lecturas anteriores registradas en este medidor.
+                </p>
+              ) : (
+                <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'flex-end', height: '85px', paddingTop: '12px' }}>
+                  {historicoConsumo.map((reg, index) => {
+                    const consumo = Number(reg.consumo_m3) || 0;
+                    const alturaPorcentaje = Math.round((consumo / maxConsumo) * 100);
+
+                    return (
+                      <div key={index} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '22%' }}>
+                        <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: '#1d4ed8', marginBottom: '3px' }}>
+                          {consumo}m³
+                        </span>
+                        <div
+                          style={{
+                            width: '100%',
+                            maxWidth: '28px',
+                            height: `${Math.max(alturaPorcentaje, 10)}%`,
+                            backgroundColor: '#2563eb',
+                            borderRadius: '3px 3px 0 0'
+                          }}
+                        />
+                        <span style={{ fontSize: '0.65rem', color: '#4b5563', marginTop: '3px' }}>
+                          {nombresMeses[reg.periodo_mes]}/{String(reg.periodo_anio).slice(-2)}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
