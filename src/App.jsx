@@ -117,7 +117,6 @@ function AppAutenticada({ onCerrarSesion, tema }) {
 
       {vistaActiva === 'dashboard' && (
         <DashboardView
-          zonas={datos.zonas}
           acometidas={datos.acometidas}
           totalActivos={datos.totalActivos}
           totalLeidosGlobal={datos.totalLeidosGlobal}

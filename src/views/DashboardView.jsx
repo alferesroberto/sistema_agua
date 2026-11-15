@@ -1,11 +1,33 @@
 export default function DashboardView({
-  zonas,
   acometidas,
   totalActivos,
   totalLeidosGlobal,
   totalPendientesGlobal,
   porcentajeAvance
 }) {
+  const porCaserio = [];
+  const indice = new Map();
+
+  acometidas.forEach((a) => {
+    const clave = a.caserio_id || a.nombre_caserio;
+    if (!indice.has(clave)) {
+      const item = {
+        id: clave,
+        nombre: a.nombre_caserio,
+        zona: a.nombre_zona,
+        total: 0,
+        leidos: 0
+      };
+      indice.set(clave, item);
+      porCaserio.push(item);
+    }
+    const item = indice.get(clave);
+    item.total += 1;
+    if (a.lectura_noviembre) item.leidos += 1;
+  });
+
+  porCaserio.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+
   return (
     <div>
       <div className="stat-grid">
@@ -33,22 +55,23 @@ export default function DashboardView({
         </div>
       </div>
 
-      <h3 style={{ fontSize: '1rem', marginBottom: 10 }}>Avance por Zona</h3>
-      {zonas.map((z) => {
-        const acomZona = acometidas.filter((a) => a.zona_id === z.id);
-        const leidosZona = acomZona.filter((a) => Boolean(a.lectura_noviembre)).length;
-        const pctZona = acomZona.length > 0 ? Math.round((leidosZona / acomZona.length) * 100) : 0;
+      <h3 style={{ fontSize: '1rem', marginBottom: 10 }}>Avance por Caserío</h3>
+      {porCaserio.map((c) => {
+        const pct = c.total > 0 ? Math.round((c.leidos / c.total) * 100) : 0;
 
         return (
-          <div key={z.id} className="zona-card">
+          <div key={c.id} className="zona-card">
             <div className="progreso-head" style={{ fontSize: '0.9rem' }}>
-              <b>{z.nombre_zona}</b>
+              <div>
+                <b>{c.nombre}</b>
+                <div style={{ fontSize: '0.75rem', color: 'var(--texto-suave)', fontWeight: 400 }}>{c.zona}</div>
+              </div>
               <span>
-                {leidosZona} / {acomZona.length} ({pctZona}%)
+                {c.leidos} / {c.total} ({pct}%)
               </span>
             </div>
             <div className="barra azul">
-              <span style={{ width: `${pctZona}%` }} />
+              <span style={{ width: `${pct}%` }} />
             </div>
           </div>
         );
