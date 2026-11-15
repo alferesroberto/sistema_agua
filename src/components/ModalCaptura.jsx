@@ -17,13 +17,23 @@ export default function ModalCaptura({
   guardando,
   onVolver,
   onCapturarGps,
-  onGuardar
+  onGuardar,
+  onToggleActivo
 }) {
   return (
     <div className="captura">
-      <button type="button" className="btn" onClick={onVolver}>
-        &larr; Volver al listado
-      </button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+        <button type="button" className="btn" onClick={onVolver}>
+          &larr; Volver al listado
+        </button>
+        <button
+          type="button"
+          className="btn btn-peligro"
+          onClick={() => onToggleActivo(acometidaActiva.id, acometidaActiva.activo !== false)}
+        >
+          Desactivar acometida
+        </button>
+      </div>
 
       <div className="ficha-servicio">
         <div className="codigo">

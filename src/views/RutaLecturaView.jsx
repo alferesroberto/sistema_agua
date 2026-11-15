@@ -10,8 +10,10 @@ export default function RutaLecturaView({
   setBusqueda,
   listaPendientes,
   listaLeidos,
+  listaInactivas,
   acometidaActiva,
   abrirCaptura,
+  toggleActivoAcometida,
   capturaProps
 }) {
   const [subTabRuta, setSubTabRuta] = useState('pendientes');
@@ -26,7 +28,8 @@ export default function RutaLecturaView({
     return <ModalCaptura acometidaActiva={acometidaActiva} {...capturaProps} />;
   }
 
-  const listaActiva = subTabRuta === 'pendientes' ? listaPendientes : listaLeidos;
+  const listaActiva =
+    subTabRuta === 'pendientes' ? listaPendientes : subTabRuta === 'leidos' ? listaLeidos : listaInactivas;
   const indiceUltimo = paginaActual * elementosPorPagina;
   const indicePrimero = indiceUltimo - elementosPorPagina;
   const elementosPaginados = listaActiva.slice(indicePrimero, indiceUltimo);
@@ -67,6 +70,13 @@ export default function RutaLecturaView({
         >
           Ya Leídos ({listaLeidos.length})
         </button>
+        <button
+          type="button"
+          className={`subtab${subTabRuta === 'inactivos' ? ' is-inactivo' : ''}`}
+          onClick={() => setSubTabRuta('inactivos')}
+        >
+          Inactivos ({listaInactivas.length})
+        </button>
       </div>
 
       <div className="lista">
@@ -74,47 +84,53 @@ export default function RutaLecturaView({
           <p className="vacio">
             {subTabRuta === 'pendientes'
               ? 'No hay lecturas pendientes con este filtro.'
-              : 'Aún no se han registrado lecturas en esta sección.'}
+              : subTabRuta === 'leidos'
+                ? 'Aún no se han registrado lecturas en esta sección.'
+                : 'No hay acometidas inactivas con este filtro.'}
           </p>
         ) : (
           elementosPaginados.map((a) => {
             const esLeido = subTabRuta === 'leidos';
+            const esInactivo = subTabRuta === 'inactivos';
             return (
               <div
                 key={a.id}
-                className={`tarjeta ${esLeido ? 'leido' : 'pendiente'}`}
-                onClick={() => !esLeido && abrirCaptura(a)}
-                style={{ cursor: esLeido ? 'default' : 'pointer' }}
+                className={`tarjeta ${esInactivo ? 'inactiva' : esLeido ? 'leido' : 'pendiente'}`}
+                onClick={() => !esLeido && !esInactivo && abrirCaptura(a)}
+                style={{ cursor: esLeido || esInactivo ? 'default' : 'pointer' }}
               >
                 <div>
                   <div className="tarjeta-titulo">
                     No. {a.numero_servicio} — {a.nombre_beneficiario}
                   </div>
                   <div className="tarjeta-meta">
-                    {a.nombre_zona} • {a.nombre_caserio} •{' '}
-                    {esLeido ? (
-                      <>
-                        Consumo: <b>{a.lectura_noviembre?.consumo_m3 || 0} m³</b>
-                      </>
-                    ) : (
-                      <>
-                        Medidor: <b>{a.medidor_numero || 'S/N'}</b>
-                      </>
-                    )}
+                    {a.nombre_zona} • {a.nombre_caserio} • Medidor: <b>{a.medidor_numero || 'S/N'}</b>
                   </div>
                 </div>
                 <div className="tarjeta-dato">
-                  {esLeido ? (
+                  {esLeido && (
                     <>
                       <small>Lectura Nov</small>
                       <strong>{a.lectura_noviembre?.lectura_actual}</strong>
                     </>
-                  ) : (
+                  )}
+                  {!esLeido && !esInactivo && (
                     <>
                       <small>Base Oct</small>
                       <strong>{a.lectura_base}</strong>
                     </>
                   )}
+                  <button
+                    type="button"
+                    className={`btn ${esInactivo ? 'btn-primario' : 'btn-peligro'}`}
+                    style={{ marginTop: 6, fontSize: '0.75rem', minHeight: 32, padding: '4px 8px' }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleActivoAcometida(a.id, a.activo !== false);
+                    }}
+                  >
+                    {esInactivo ? 'Activar' : 'Desactivar'}
+                  </button>
                 </div>
               </div>
             );

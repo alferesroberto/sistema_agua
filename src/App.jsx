@@ -81,7 +81,8 @@ function AppAutenticada({ onCerrarSesion, tema }) {
     guardando: datos.guardando,
     onVolver: datos.cerrarCaptura,
     onCapturarGps: datos.capturarUbicacionGps,
-    onGuardar: datos.handleGuardarLectura
+    onGuardar: datos.handleGuardarLectura,
+    onToggleActivo: datos.toggleActivoAcometida
   };
 
   return (
@@ -109,15 +110,17 @@ function AppAutenticada({ onCerrarSesion, tema }) {
           setBusqueda={datos.setBusqueda}
           listaPendientes={datos.listaPendientes}
           listaLeidos={datos.listaLeidos}
+          listaInactivas={datos.listaInactivas}
           acometidaActiva={datos.acometidaActiva}
           abrirCaptura={datos.abrirCaptura}
+          toggleActivoAcometida={datos.toggleActivoAcometida}
           capturaProps={capturaProps}
         />
       )}
 
       {vistaActiva === 'dashboard' && (
         <DashboardView
-          acometidas={datos.acometidas}
+          acometidas={datos.acometidasActivas}
           totalActivos={datos.totalActivos}
           totalLeidosGlobal={datos.totalLeidosGlobal}
           totalPendientesGlobal={datos.totalPendientesGlobal}
@@ -128,8 +131,8 @@ function AppAutenticada({ onCerrarSesion, tema }) {
       {vistaActiva === 'mapa' && (
         <MapaView
           zonas={datos.zonas}
-          acometidas={datos.acometidas}
-          acometidasFiltradas={datos.acometidasFiltradas}
+          acometidas={datos.acometidasActivas}
+          acometidasFiltradas={datos.acometidasEnRuta}
           filtroZona={datos.filtroZona}
           setFiltroZona={datos.setFiltroZona}
         />
@@ -137,7 +140,7 @@ function AppAutenticada({ onCerrarSesion, tema }) {
 
       {vistaActiva === 'reportes' && (
         <ReportesView
-          acometidas={datos.acometidas}
+          acometidas={datos.acometidasActivas}
           casosAtencion={datos.casosAtencion}
           totalLeidosGlobal={datos.totalLeidosGlobal}
         />

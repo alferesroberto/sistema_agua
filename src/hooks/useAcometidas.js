@@ -30,14 +30,14 @@ export function useAcometidas() {
     cargarTodo();
   }, []);
 
-  async function cargarTodo() {
-    setLoading(true);
+  async function cargarTodo({ silencioso = false } = {}) {
+    if (!silencioso) setLoading(true);
     try {
       const [resZonas, resCaserios, resBenef, resAcom, resLecturas] = await Promise.all([
         supabase.from('zonas').select('*').order('id'),
         supabase.from('caserios').select('*'),
         supabase.from('beneficiarios').select('*'),
-        supabase.from('acometidas').select('*').eq('activo', true).order('numero_servicio'),
+        supabase.from('acometidas').select('*').order('numero_servicio'),
         supabase
           .from('lecturas_mensuales')
           .select('*')
@@ -130,6 +130,31 @@ export function useAcometidas() {
 
   function cerrarCaptura() {
     setAcometidaActiva(null);
+  }
+
+  async function toggleActivoAcometida(acometidaId, estadoActual) {
+    const nuevoEstado = !estadoActual;
+    const mensaje = nuevoEstado
+      ? '¿Reactivar esta acometida en la ruta de lecturas?'
+      : '¿Desactivar esta acometida? Saldrá de la ruta hasta que la vuelvas a activar.';
+
+    if (!window.confirm(mensaje)) return;
+
+    const { error } = await supabase
+      .from('acometidas')
+      .update({ activo: nuevoEstado, actualizado_en: new Date().toISOString() })
+      .eq('id', acometidaId);
+
+    if (error) {
+      alert('Error al actualizar el estado: ' + error.message);
+      return;
+    }
+
+    if (acometidaActiva?.id === acometidaId) {
+      setAcometidaActiva(null);
+    }
+
+    await cargarTodo({ silencioso: true });
   }
 
   async function handleGuardarLectura(e) {
@@ -233,15 +258,18 @@ export function useAcometidas() {
     });
   }, [acometidas, filtroZona, busqueda]);
 
-  const listaPendientes = acometidasFiltradas.filter((a) => !a.lectura_noviembre);
-  const listaLeidos = acometidasFiltradas.filter((a) => Boolean(a.lectura_noviembre));
+  const acometidasEnRuta = acometidasFiltradas.filter((a) => a.activo !== false);
+  const listaPendientes = acometidasEnRuta.filter((a) => !a.lectura_noviembre);
+  const listaLeidos = acometidasEnRuta.filter((a) => Boolean(a.lectura_noviembre));
+  const listaInactivas = acometidasFiltradas.filter((a) => a.activo === false);
 
-  const totalActivos = acometidas.length;
-  const totalLeidosGlobal = acometidas.filter((a) => Boolean(a.lectura_noviembre)).length;
+  const acometidasActivas = acometidas.filter((a) => a.activo !== false);
+  const totalActivos = acometidasActivas.length;
+  const totalLeidosGlobal = acometidasActivas.filter((a) => Boolean(a.lectura_noviembre)).length;
   const totalPendientesGlobal = totalActivos - totalLeidosGlobal;
   const porcentajeAvance = totalActivos > 0 ? Math.round((totalLeidosGlobal / totalActivos) * 100) : 0;
 
-  const casosAtencion = acometidas.filter(
+  const casosAtencion = acometidasActivas.filter(
     (a) =>
       a.lectura_noviembre &&
       (a.lectura_noviembre.requiere_atencion ||
@@ -253,6 +281,7 @@ export function useAcometidas() {
     zonas,
     caserios,
     acometidas,
+    acometidasActivas,
     lecturasMesActual,
     loading,
     cargarTodo,
@@ -261,8 +290,10 @@ export function useAcometidas() {
     busqueda,
     setBusqueda,
     acometidasFiltradas,
+    acometidasEnRuta,
     listaPendientes,
     listaLeidos,
+    listaInactivas,
     totalActivos,
     totalLeidosGlobal,
     totalPendientesGlobal,
@@ -287,6 +318,7 @@ export function useAcometidas() {
     abrirCaptura,
     cerrarCaptura,
     capturarUbicacionGps,
-    handleGuardarLectura
+    handleGuardarLectura,
+    toggleActivoAcometida
   };
 }

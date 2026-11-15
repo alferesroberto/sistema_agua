@@ -314,6 +314,11 @@ textarea:focus {
   border-bottom: 3px solid var(--exito);
 }
 
+.subtab.is-inactivo {
+  color: var(--texto-suave);
+  border-bottom: 3px solid var(--texto-suave);
+}
+
 .lista {
   display: flex;
   flex-direction: column;
@@ -345,6 +350,11 @@ textarea:focus {
   border-left: 4px solid var(--exito);
   background: var(--exito-bg);
   border-color: var(--exito-borde);
+}
+
+.tarjeta.inactiva {
+  border-left: 4px solid var(--texto-suave);
+  opacity: 0.85;
 }
 
 .tarjeta-titulo {
