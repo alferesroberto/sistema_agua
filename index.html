@@ -1,12 +1,22 @@
 <!doctype html>
-<html lang="en">
+<html lang="es" data-tema="sistema">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#2563eb" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <title>sistema_agua</title>
+    <title>Sistema de Lecturas</title>
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('sistema_agua_tema') || 'sistema';
+          document.documentElement.dataset.tema = t;
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -18,7 +18,6 @@ export default function RutaLecturaView({
   const [paginaActual, setPaginaActual] = useState(1);
   const elementosPorPagina = 15;
 
-  // Reiniciar a la página 1 cada vez que cambie el filtro, la búsqueda o la sub-pestaña
   useEffect(() => {
     setPaginaActual(1);
   }, [subTabRuta, filtroZona, busqueda]);
@@ -27,10 +26,7 @@ export default function RutaLecturaView({
     return <ModalCaptura acometidaActiva={acometidaActiva} {...capturaProps} />;
   }
 
-  // Determinar qué lista mostrar según la sub-pestaña activa
   const listaActiva = subTabRuta === 'pendientes' ? listaPendientes : listaLeidos;
-
-  // Calcular elementos de la página actual
   const indiceUltimo = paginaActual * elementosPorPagina;
   const indicePrimero = indiceUltimo - elementosPorPagina;
   const elementosPaginados = listaActiva.slice(indicePrimero, indiceUltimo);
@@ -38,12 +34,8 @@ export default function RutaLecturaView({
 
   return (
     <>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 15, flexWrap: 'wrap' }}>
-        <select
-          value={filtroZona}
-          onChange={(e) => setFiltroZona(e.target.value)}
-          style={{ padding: 10, borderRadius: 8, border: '1px solid #d1d5db', flex: '1 1 160px' }}
-        >
+      <div className="filtros">
+        <select value={filtroZona} onChange={(e) => setFiltroZona(e.target.value)}>
           <option value="TODAS">Todas las Zonas ({acometidas.length})</option>
           {zonas.map((z) => (
             <option key={z.id} value={z.id}>
@@ -57,47 +49,29 @@ export default function RutaLecturaView({
           placeholder="Buscar por N°, nombre, medidor o caserío..."
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
-          style={{ padding: 10, borderRadius: 8, border: '1px solid #d1d5db', flex: '2 1 220px' }}
         />
       </div>
 
-      <div style={{ display: 'flex', borderBottom: '2px solid #e5e7eb', marginBottom: 12 }}>
+      <div className="subtabs">
         <button
+          type="button"
+          className={`subtab${subTabRuta === 'pendientes' ? ' is-pendiente' : ''}`}
           onClick={() => setSubTabRuta('pendientes')}
-          style={{
-            flex: 1,
-            padding: 10,
-            border: 'none',
-            background: 'none',
-            fontWeight: 'bold',
-            cursor: 'pointer',
-            borderBottom: subTabRuta === 'pendientes' ? '3px solid #ea580c' : 'none',
-            color: subTabRuta === 'pendientes' ? '#ea580c' : '#6b7280'
-          }}
         >
           Pendientes ({listaPendientes.length})
         </button>
         <button
+          type="button"
+          className={`subtab${subTabRuta === 'leidos' ? ' is-leido' : ''}`}
           onClick={() => setSubTabRuta('leidos')}
-          style={{
-            flex: 1,
-            padding: 10,
-            border: 'none',
-            background: 'none',
-            fontWeight: 'bold',
-            cursor: 'pointer',
-            borderBottom: subTabRuta === 'leidos' ? '3px solid #16a34a' : 'none',
-            color: subTabRuta === 'leidos' ? '#16a34a' : '#6b7280'
-          }}
         >
           Ya Leídos ({listaLeidos.length})
         </button>
       </div>
 
-      {/* CONTENIDO DE LA LISTA */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div className="lista">
         {listaActiva.length === 0 ? (
-          <p style={{ textAlign: 'center', color: '#6b7280', padding: 20 }}>
+          <p className="vacio">
             {subTabRuta === 'pendientes'
               ? 'No hay lecturas pendientes con este filtro.'
               : 'Aún no se han registrado lecturas en esta sección.'}
@@ -108,24 +82,15 @@ export default function RutaLecturaView({
             return (
               <div
                 key={a.id}
+                className={`tarjeta ${esLeido ? 'leido' : 'pendiente'}`}
                 onClick={() => !esLeido && abrirCaptura(a)}
-                style={{
-                  padding: 12,
-                  border: esLeido ? '1px solid #d1fae5' : '1px solid #e5e7eb',
-                  borderLeft: esLeido ? '4px solid #16a34a' : '4px solid #ea580c',
-                  borderRadius: 8,
-                  background: esLeido ? '#f0fdf4' : '#fff',
-                  cursor: esLeido ? 'default' : 'pointer',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
-                }}
+                style={{ cursor: esLeido ? 'default' : 'pointer' }}
               >
                 <div>
-                  <div style={{ fontWeight: 'bold', fontSize: '0.95rem' }}>
+                  <div className="tarjeta-titulo">
                     No. {a.numero_servicio} — {a.nombre_beneficiario}
                   </div>
-                  <div style={{ fontSize: '0.8rem', color: esLeido ? '#4b5563' : '#6b7280', marginTop: 2 }}>
+                  <div className="tarjeta-meta">
                     {a.nombre_zona} • {a.nombre_caserio} •{' '}
                     {esLeido ? (
                       <>
@@ -138,18 +103,16 @@ export default function RutaLecturaView({
                     )}
                   </div>
                 </div>
-                <div style={{ textAlign: 'right', minWidth: 75 }}>
+                <div className="tarjeta-dato">
                   {esLeido ? (
                     <>
-                      <div style={{ fontSize: '0.75rem', color: '#15803d' }}>Lectura Nov</div>
-                      <div style={{ fontWeight: 'bold', color: '#166534', fontSize: '1rem' }}>
-                        {a.lectura_noviembre?.lectura_actual}
-                      </div>
+                      <small>Lectura Nov</small>
+                      <strong>{a.lectura_noviembre?.lectura_actual}</strong>
                     </>
                   ) : (
                     <>
-                      <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>Base Oct</div>
-                      <div style={{ fontWeight: 'bold', color: '#1f2937' }}>{a.lectura_base}</div>
+                      <small>Base Oct</small>
+                      <strong>{a.lectura_base}</strong>
                     </>
                   )}
                 </div>
@@ -159,43 +122,26 @@ export default function RutaLecturaView({
         )}
       </div>
 
-      {/* CONTROLES DE PAGINACIÓN */}
       {totalPaginas > 1 && (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 20, padding: '10px 0' }}>
+        <div className="paginacion">
           <button
+            type="button"
+            className="btn"
             onClick={() => setPaginaActual((p) => Math.max(p - 1, 1))}
             disabled={paginaActual === 1}
-            style={{
-              padding: '8px 14px',
-              borderRadius: 6,
-              border: '1px solid #d1d5db',
-              background: paginaActual === 1 ? '#f3f4f6' : '#fff',
-              color: paginaActual === 1 ? '#9ca3af' : '#374151',
-              cursor: paginaActual === 1 ? 'not-allowed' : 'pointer',
-              fontWeight: 'bold',
-              fontSize: '0.85rem'
-            }}
           >
             &larr; Anterior
           </button>
 
-          <span style={{ fontSize: '0.85rem', color: '#4b5563' }}>
-            Página <b>{paginaActual}</b> de <b>{totalPaginas}</b> ({listaActiva.length} registros)
+          <span>
+            Página <b>{paginaActual}</b> de <b>{totalPaginas}</b>
           </span>
 
           <button
+            type="button"
+            className="btn"
             onClick={() => setPaginaActual((p) => Math.min(p + 1, totalPaginas))}
             disabled={paginaActual === totalPaginas}
-            style={{
-              padding: '8px 14px',
-              borderRadius: 6,
-              border: '1px solid #d1d5db',
-              background: paginaActual === totalPaginas ? '#f3f4f6' : '#fff',
-              color: paginaActual === totalPaginas ? '#9ca3af' : '#374151',
-              cursor: paginaActual === totalPaginas ? 'not-allowed' : 'pointer',
-              fontWeight: 'bold',
-              fontSize: '0.85rem'
-            }}
           >
             Siguiente &rarr;
           </button>

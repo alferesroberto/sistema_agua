@@ -20,34 +20,27 @@ export default function ModalCaptura({
   onGuardar
 }) {
   return (
-    <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 10, padding: 16 }}>
-      <button
-        onClick={onVolver}
-        style={{ marginBottom: 12, padding: '6px 12px', borderRadius: 6, border: '1px solid #d1d5db', background: '#fff', cursor: 'pointer' }}
-      >
+    <div className="captura">
+      <button type="button" className="btn" onClick={onVolver}>
         &larr; Volver al listado
       </button>
 
-      <div style={{ background: '#eff6ff', padding: 12, borderRadius: 8, marginBottom: 15 }}>
-        <div style={{ fontSize: '0.8rem', color: '#1d4ed8', fontWeight: 'bold' }}>
+      <div className="ficha-servicio">
+        <div className="codigo">
           Servicio No. {acometidaActiva.numero_servicio} | Medidor: {acometidaActiva.medidor_numero || 'S/N'}
         </div>
-        <div style={{ fontSize: '1.1rem', fontWeight: 'bold', margin: '4px 0' }}>
-          {acometidaActiva.nombre_beneficiario}
-        </div>
-        <div style={{ fontSize: '0.85rem', color: '#4b5563' }}>
+        <h3>{acometidaActiva.nombre_beneficiario}</h3>
+        <div style={{ fontSize: '0.85rem', color: 'var(--texto-suave)' }}>
           {acometidaActiva.nombre_zona} — Caserío: <b>{acometidaActiva.nombre_caserio}</b>
         </div>
-        <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid #bfdbfe', fontSize: '0.95rem' }}>
+        <div className="ficha-base">
           Lectura Anterior (Octubre): <b>{acometidaActiva.lectura_base}</b>
         </div>
       </div>
 
-      <form onSubmit={onGuardar} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <form onSubmit={onGuardar} className="form-col">
         <div>
-          <label style={{ fontWeight: 'bold', display: 'block', marginBottom: 4 }}>
-            Lectura Actual (Noviembre 2026): *
-          </label>
+          <label className="bloque">Lectura Actual (Noviembre 2026): *</label>
           <input
             type="number"
             step="any"
@@ -55,22 +48,18 @@ export default function ModalCaptura({
             value={lecturaActual}
             onChange={(e) => setLecturaActual(e.target.value)}
             placeholder={`Mayor o igual a ${acometidaActiva.lectura_base}`}
-            style={{ width: '100%', padding: 12, fontSize: '1.1rem', borderRadius: 8, border: '1px solid #9ca3af', boxSizing: 'border-box' }}
+            style={{ fontSize: '1.1rem' }}
           />
           {lecturaActual !== '' && (
-            <div style={{ fontSize: '0.85rem', marginTop: 4, color: '#047857', fontWeight: 'bold' }}>
+            <div className="consumo-ok">
               Consumo calculado: {Math.max(parseFloat(lecturaActual) - Number(acometidaActiva.lectura_base || 0), 0)} m³
             </div>
           )}
         </div>
 
         <div>
-          <label style={{ fontWeight: 'bold', display: 'block', marginBottom: 4 }}>Estado del Medidor:</label>
-          <select
-            value={estadoMedidor}
-            onChange={(e) => setEstadoMedidor(e.target.value)}
-            style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db' }}
-          >
+          <label className="bloque">Estado del Medidor:</label>
+          <select value={estadoMedidor} onChange={(e) => setEstadoMedidor(e.target.value)}>
             <option value="BUENO">Bueno</option>
             <option value="DAÑADO">Dañado / Detenido</option>
             <option value="SIN CAJA">Sin Caja / Expuesto</option>
@@ -79,8 +68,8 @@ export default function ModalCaptura({
           </select>
         </div>
 
-        <div style={{ background: '#f3f4f6', padding: 10, borderRadius: 8, fontSize: '0.85rem' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 'bold', cursor: 'pointer' }}>
+        <div className="caja-suave">
+          <label className="check-fila">
             <input
               type="checkbox"
               checked={actualizarGps}
@@ -88,6 +77,7 @@ export default function ModalCaptura({
                 setActualizarGps(e.target.checked);
                 if (e.target.checked) onCapturarGps();
               }}
+              style={{ width: 'auto' }}
             />
             {acometidaActiva.latitud
               ? 'Actualizar ubicación GPS (medidor movido)'
@@ -95,78 +85,51 @@ export default function ModalCaptura({
           </label>
 
           {actualizarGps ? (
-            <div style={{ marginTop: 6, color: '#1f2937' }}>
+            <div style={{ marginTop: 6 }}>
               {obteniendoGps ? (
                 <span>Obteniendo coordenadas satelitales...</span>
               ) : coordsGps.lat ? (
                 <span>
                   GPS listo: <b>{coordsGps.lat}, {coordsGps.lng}</b> (±{coordsGps.precision}m){' '}
-                  <button type="button" onClick={onCapturarGps} style={{ marginLeft: 6, fontSize: '0.75rem' }}>
+                  <button type="button" className="btn" onClick={onCapturarGps} style={{ marginLeft: 6, fontSize: '0.75rem' }}>
                     Recalibrar
                   </button>
                 </span>
               ) : (
-                <button type="button" onClick={onCapturarGps}>
+                <button type="button" className="btn" onClick={onCapturarGps}>
                   Obtener GPS ahora
                 </button>
               )}
             </div>
           ) : (
-            <div style={{ marginTop: 4, color: '#6b7280' }}>
+            <div style={{ marginTop: 4, color: 'var(--texto-suave)' }}>
               Ubicación guardada previamente: {acometidaActiva.latitud}, {acometidaActiva.longitud}
             </div>
           )}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        <div className="fotos-grid">
           <div>
-            <label style={{ fontWeight: 'bold', fontSize: '0.85rem', display: 'block', marginBottom: 4 }}>
+            <label className="bloque" style={{ fontSize: '0.85rem' }}>
               Foto 1 (Lectura Nov):
             </label>
-            <input
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={(e) => setFoto1(e.target.files[0])}
-              style={{ width: '100%', fontSize: '0.8rem' }}
-            />
+            <input type="file" accept="image/*" capture="environment" onChange={(e) => setFoto1(e.target.files[0])} />
           </div>
           <div>
-            <label style={{ fontWeight: 'bold', fontSize: '0.85rem', display: 'block', marginBottom: 4 }}>
+            <label className="bloque" style={{ fontSize: '0.85rem' }}>
               Foto 2 (Caja / Entorno):
             </label>
-            <input
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={(e) => setFoto2(e.target.files[0])}
-              style={{ width: '100%', fontSize: '0.8rem' }}
-            />
+            <input type="file" accept="image/*" capture="environment" onChange={(e) => setFoto2(e.target.files[0])} />
           </div>
         </div>
 
-        <div
-          style={{
-            background: requiereAtencion ? '#fef2f2' : '#f3f4f6',
-            padding: 10,
-            borderRadius: 8,
-            border: requiereAtencion ? '1px solid #fca5a5' : 'none'
-          }}
-        >
-          <label
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              fontWeight: 'bold',
-              color: requiereAtencion ? '#b91c1c' : '#374151',
-              cursor: 'pointer'
-            }}
-          >
+        <div className={requiereAtencion ? 'caja-alerta' : 'caja-suave'}>
+          <label className="check-fila" style={{ color: requiereAtencion ? 'var(--peligro-texto)' : undefined }}>
             <input
               type="checkbox"
               checked={requiereAtencion}
               onChange={(e) => setRequiereAtencion(e.target.checked)}
+              style={{ width: 'auto' }}
             />
             Reportar caso que requiere atención / revisión
           </label>
@@ -181,24 +144,11 @@ export default function ModalCaptura({
                 : 'Observaciones opcionales...'
             }
             required={requiereAtencion}
-            style={{ width: '100%', padding: 8, marginTop: 8, borderRadius: 6, border: '1px solid #d1d5db', boxSizing: 'border-box' }}
+            style={{ marginTop: 8 }}
           />
         </div>
 
-        <button
-          type="submit"
-          disabled={guardando}
-          style={{
-            background: '#16a34a',
-            color: '#fff',
-            padding: 14,
-            border: 'none',
-            borderRadius: 8,
-            fontWeight: 'bold',
-            fontSize: '1rem',
-            cursor: 'pointer'
-          }}
-        >
+        <button type="submit" className="btn btn-exito" disabled={guardando}>
           {guardando ? 'Guardando lectura y fotos...' : 'Guardar Lectura de Noviembre'}
         </button>
       </form>

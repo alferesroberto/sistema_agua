@@ -71,19 +71,16 @@ export default function MapaMedidores({ acometidas }) {
 
   return (
     <div>
-      <div style={{ display: 'flex', gap: 15, fontSize: '0.85rem', marginBottom: 10 }}>
+      <div className="mapa-leyenda">
         <span>
-          <b style={{ color: '#16a34a' }}>●</b> Leído en Noviembre
+          <b style={{ color: 'var(--exito)' }}>●</b> Leído en Noviembre
         </span>
         <span>
-          <b style={{ color: '#ea580c' }}>●</b> Pendiente de lectura
+          <b style={{ color: 'var(--alerta)' }}>●</b> Pendiente de lectura
         </span>
-        <span style={{ color: '#6b7280' }}>(Geolocalizados: {geolocalizados})</span>
+        <span>(Geolocalizados: {geolocalizados})</span>
       </div>
-      <div
-        ref={mapContainerRef}
-        style={{ width: '100%', height: '450px', borderRadius: 10, border: '1px solid #d1d5db' }}
-      />
+      <div ref={mapContainerRef} className="mapa-canvas" />
     </div>
   );
 }

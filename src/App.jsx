@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { obtenerSesion, suscribirSesion, cerrarSesion } from './services/authService';
 import { useAcometidas } from './hooks/useAcometidas';
+import { useTema } from './hooks/useTema';
 import LoginView from './views/LoginView';
 import Navbar from './components/Navbar';
 import DashboardView from './views/DashboardView';
@@ -10,6 +11,7 @@ import ReportesView from './views/ReportesView';
 
 export default function App() {
   const [sesion, setSesion] = useState(undefined);
+  const tema = useTema();
 
   useEffect(() => {
     let cancelado = false;
@@ -38,21 +40,17 @@ export default function App() {
   }
 
   if (sesion === undefined) {
-    return (
-      <div style={{ padding: 30, textAlign: 'center', fontFamily: 'sans-serif' }}>
-        Verificando sesión...
-      </div>
-    );
+    return <div className="pantalla-carga">Verificando sesión...</div>;
   }
 
   if (!sesion) {
-    return <LoginView />;
+    return <LoginView preferencia={tema.preferencia} onCambiarTema={tema.setPreferencia} />;
   }
 
-  return <AppAutenticada onCerrarSesion={handleCerrarSesion} />;
+  return <AppAutenticada onCerrarSesion={handleCerrarSesion} tema={tema} />;
 }
 
-function AppAutenticada({ onCerrarSesion }) {
+function AppAutenticada({ onCerrarSesion, tema }) {
   const [vistaActiva, setVistaActiva] = useState('ruta');
   const datos = useAcometidas();
 
@@ -62,11 +60,7 @@ function AppAutenticada({ onCerrarSesion }) {
   }
 
   if (datos.loading) {
-    return (
-      <div style={{ padding: 30, textAlign: 'center', fontFamily: 'sans-serif' }}>
-        Cargando padrón activo y lecturas de noviembre...
-      </div>
-    );
+    return <div className="pantalla-carga">Cargando padrón activo y lecturas de noviembre...</div>;
   }
 
   const capturaProps = {
@@ -91,7 +85,7 @@ function AppAutenticada({ onCerrarSesion }) {
   };
 
   return (
-    <div style={{ maxWidth: 800, margin: '0 auto', padding: 15, fontFamily: 'sans-serif', color: '#1f2937' }}>
+    <div className="app-shell">
       <Navbar
         vistaActiva={vistaActiva}
         onCambiarVista={cambiarVista}
@@ -101,6 +95,8 @@ function AppAutenticada({ onCerrarSesion }) {
         casosAtencion={datos.casosAtencion.length}
         onActualizar={datos.cargarTodo}
         onCerrarSesion={onCerrarSesion}
+        preferencia={tema.preferencia}
+        onCambiarTema={tema.setPreferencia}
       />
 
       {vistaActiva === 'ruta' && (

@@ -1,3 +1,5 @@
+import TemaToggle from './TemaToggle';
+
 export default function Navbar({
   vistaActiva,
   onCambiarVista,
@@ -6,60 +8,49 @@ export default function Navbar({
   porcentajeAvance,
   casosAtencion,
   onActualizar,
-  onCerrarSesion
+  onCerrarSesion,
+  preferencia,
+  onCambiarTema
 }) {
   const tabs = [
-    { id: 'ruta', label: 'Ruta Lectura' },
+    { id: 'ruta', label: 'Ruta' },
     { id: 'dashboard', label: 'Dashboard' },
     { id: 'mapa', label: 'Mapa GPS' },
-    { id: 'reportes', label: `Exportar / Alertas (${casosAtencion})` }
+    { id: 'reportes', label: `Alertas (${casosAtencion})` }
   ];
 
   return (
-    <>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}>
+    <header className="navbar">
+      <div className="navbar-top">
         <div>
-          <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#1e3a8a' }}>Sistema de Lecturas — Noviembre 2026</h2>
-          <span style={{ fontSize: '0.8rem', color: '#6b7280' }}>
+          <h2>Sistema de Lecturas — Noviembre 2026</h2>
+          <span className="navbar-avance">
             Avance: <b>{totalLeidos}</b> de <b>{totalActivos}</b> activos ({porcentajeAvance}%)
           </span>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button
-            onClick={onActualizar}
-            style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid #d1d5db', background: '#fff', cursor: 'pointer' }}
-          >
+        <div className="navbar-acciones">
+          <TemaToggle preferencia={preferencia} onCambiar={onCambiarTema} />
+          <button type="button" className="btn" onClick={onActualizar}>
             Actualizar
           </button>
-          <button
-            onClick={onCerrarSesion}
-            style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid #fecaca', background: '#fef2f2', color: '#991b1b', cursor: 'pointer' }}
-          >
+          <button type="button" className="btn btn-peligro" onClick={onCerrarSesion}>
             Salir
           </button>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, marginBottom: 15 }}>
+      <nav className="nav-tabs">
         {tabs.map((tab) => (
           <button
             key={tab.id}
+            type="button"
+            className={`nav-tab${vistaActiva === tab.id ? ' is-activa' : ''}`}
             onClick={() => onCambiarVista(tab.id)}
-            style={{
-              padding: '10px 6px',
-              borderRadius: 8,
-              border: 'none',
-              fontWeight: 'bold',
-              fontSize: '0.8rem',
-              cursor: 'pointer',
-              background: vistaActiva === tab.id ? '#2563eb' : '#e5e7eb',
-              color: vistaActiva === tab.id ? '#fff' : '#374151'
-            }}
           >
             {tab.label}
           </button>
         ))}
-      </div>
-    </>
+      </nav>
+    </header>
   );
 }
