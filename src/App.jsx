@@ -23,27 +23,36 @@ export default function App() {
   async function fetchDatosSupabase() {
     setLoading(true);
     try {
-      // Cargar zonas
+      // 1. Cargar zonas
       const { data: dataZonas } = await supabase.from('zonas').select('*');
       setZonas(dataZonas || []);
 
-      // Cargar caseríos
+      // 2. Cargar caseríos
       const { data: dataCaserios } = await supabase.from('caserios').select('*');
       setCaserios(dataCaserios || []);
 
-      // Cargar acometidas unidas con beneficiarios
-      const { data: dataAcometidas } = await supabase.from('acometidas').select(`
-        id,
-        numero_servicio,
-        medidor_numero,
-        lectura_base,
-        estado_medidor,
-        latitud,
-        longitud,
-        beneficiarios ( nombre_completo ),
-        caserios ( id, nombre_caserio, zona_id )
-      `);
-      setAcometidas(dataAcometidas || []);
+      // 3. Cargar beneficiarios directamente
+      const { data: dataBeneficiarios } = await supabase.from('beneficiarios').select('*');
+      
+      // 4. Cargar acometidas y unirlas en JavaScript de forma segura
+      const { data: dataAcometidas, error: errAcometidas } = await supabase.from('acometidas').select('*');
+      
+      if (errAcometidas) throw errAcometidas;
+
+      // Unir los datos en memoria para el selector
+      const acometidasCompletas = (dataAcometidas || []).map(acometida => {
+        const beneficiario = (dataBeneficiarios || []).find(b => b.id === acometida.beneficiario_id);
+        const caserio = (dataCaserios || []).find(c => c.id === acometida.caserio_id);
+        
+        return {
+          ...acometida,
+          beneficiarios: { nombre_completo: beneficiario ? beneficiario.nombre_completo : 'Sin Nombre' },
+          caserios: { nombre_caserio: caserio ? caserio.nombre_caserio : 'Sin Caserío' }
+        };
+      });
+
+      setAcometidas(acometidasCompletas);
+
     } catch (error) {
       console.error("Error cargando datos de Supabase:", error);
     } finally {
