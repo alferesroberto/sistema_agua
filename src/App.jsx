@@ -63,7 +63,7 @@ export default function App() {
       setHistoricoConsumo([]);
       return;
     }
-
+  
     try {
       const { data, error } = await supabase
         .from('lecturas_mensuales')
@@ -71,13 +71,17 @@ export default function App() {
         .eq('acometida_id', acometidaId)
         .order('periodo_anio', { ascending: false })
         .order('periodo_mes', { ascending: false })
-        .limit(4); // Últimos 4 meses
-
-      if (error) throw error;
-      // Invertimos para que queden cronológicamente de más antiguo a más reciente en la gráfica
+        .limit(4);
+  
+      if (error) {
+        console.error("Error devuelto por Supabase:", error.message);
+        throw error;
+      }
+  
+      console.log("Datos de histórico encontrados para ID", acometidaId, ":", data);
       setHistoricoConsumo(data ? data.reverse() : []);
     } catch (error) {
-      console.error("Error al cargar histórico de consumo:", error);
+      console.error("Excepción al cargar histórico:", error);
       setHistoricoConsumo([]);
     }
   }
