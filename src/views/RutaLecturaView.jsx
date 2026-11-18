@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import ModalCaptura from '../components/ModalCaptura';
+import OrdenRutaPanel from '../components/OrdenRutaPanel';
 
 export default function RutaLecturaView({
   zonas,
@@ -14,6 +15,7 @@ export default function RutaLecturaView({
   acometidaActiva,
   abrirCaptura,
   toggleActivoAcometida,
+  ubicarEnRuta,
   capturaProps
 }) {
   const [subTabRuta, setSubTabRuta] = useState('pendientes');
@@ -101,11 +103,13 @@ export default function RutaLecturaView({
               >
                 <div>
                   <div className="tarjeta-titulo">
+                    <span className="ruta-seq">Ruta #{a.orden_ruta ?? '—'}</span>
                     No. {a.numero_servicio} — {a.nombre_beneficiario}
                   </div>
                   <div className="tarjeta-meta">
                     {a.nombre_zona} • {a.nombre_caserio} • Medidor: <b>{a.medidor_numero || 'S/N'}</b>
                   </div>
+                  <OrdenRutaPanel compacto acometida={a} acometidas={acometidas} onUbicar={ubicarEnRuta} />
                 </div>
                 <div className="tarjeta-dato">
                   {esLeido && (

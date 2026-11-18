@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { iniciarSesion } from '../services/authService';
 import TemaToggle from '../components/TemaToggle';
+import LegalView from './LegalView';
 
 export default function LoginView({ preferencia, onCambiarTema }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [enviando, setEnviando] = useState(false);
+  const [mostrarLegal, setMostrarLegal] = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -19,6 +21,16 @@ export default function LoginView({ preferencia, onCambiarTema }) {
     } finally {
       setEnviando(false);
     }
+  }
+
+  if (mostrarLegal) {
+    return (
+      <div className="login-page">
+        <div style={{ width: '100%', maxWidth: 800 }}>
+          <LegalView onCerrar={() => setMostrarLegal(false)} />
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -64,6 +76,10 @@ export default function LoginView({ preferencia, onCambiarTema }) {
 
         <button type="submit" className="btn btn-primario" disabled={enviando} style={{ minHeight: 44 }}>
           {enviando ? 'Ingresando...' : 'Iniciar sesión'}
+        </button>
+
+        <button type="button" className="enlace-legal" onClick={() => setMostrarLegal(true)}>
+          Privacidad, seguridad y términos
         </button>
       </form>
     </div>

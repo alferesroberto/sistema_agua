@@ -362,6 +362,53 @@ textarea:focus {
   font-size: 0.92rem;
 }
 
+.ruta-seq {
+  display: inline-block;
+  margin-right: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--primario);
+  background: var(--primario-bg);
+  border-radius: 999px;
+  padding: 1px 7px;
+  vertical-align: middle;
+}
+
+.orden-ruta-panel {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  background: var(--bg-suave);
+  border: 1px solid var(--borde-suave);
+}
+
+.orden-ruta-panel.is-compacto {
+  margin-top: 6px;
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+.orden-ruta-botones {
+  display: flex;
+  gap: 4px;
+}
+
+.btn-icono {
+  min-height: 32px;
+  min-width: 32px;
+  padding: 4px 8px;
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.orden-ruta-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
 .tarjeta-meta {
   font-size: 0.8rem;
   color: var(--texto-suave);
@@ -645,6 +692,77 @@ textarea:focus {
   gap: 8px;
   font-weight: 700;
   cursor: pointer;
+}
+
+.legal-card {
+  background: var(--bg-elev);
+  border: 1px solid var(--borde-suave);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.legal-cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.legal-cabecera h2 {
+  font-size: 1.1rem;
+  color: var(--primario-texto);
+  line-height: 1.3;
+}
+
+.legal-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 2px solid var(--borde-suave);
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.legal-tab {
+  padding: 8px 10px;
+  border: none;
+  background: none;
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: var(--texto-suave);
+  min-height: 40px;
+}
+
+.legal-tab.is-activa {
+  color: var(--primario);
+  border-bottom: 3px solid var(--primario);
+}
+
+.legal-cuerpo {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--texto);
+}
+
+.legal-cuerpo h3 {
+  color: var(--texto);
+  margin: 0 0 10px;
+  font-size: 1rem;
+}
+
+.legal-cuerpo p {
+  margin: 0 0 12px;
+}
+
+.enlace-legal {
+  background: none;
+  border: none;
+  color: var(--primario);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: underline;
+  padding: 0;
+  min-height: auto;
 }
 
 @media (min-width: 640px) {

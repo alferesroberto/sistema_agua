@@ -1,5 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../services/supabase';
+import {
+  obtenerAcometidas,
+  compararOrdenRuta,
+  acometidasDeLaZona,
+  reubicarEnRutaZona
+} from '../services/acometidasService';
 
 export const PERIODO_MES = 11;
 export const PERIODO_ANIO = 2026;
@@ -37,7 +43,7 @@ export function useAcometidas() {
         supabase.from('zonas').select('*').order('id'),
         supabase.from('caserios').select('*'),
         supabase.from('beneficiarios').select('*'),
-        supabase.from('acometidas').select('*').order('numero_servicio'),
+        obtenerAcometidas(),
         supabase
           .from('lecturas_mensuales')
           .select('*')
@@ -73,10 +79,13 @@ export function useAcometidas() {
         };
       });
 
-      setAcometidas(acometidasUnidas);
+      const ordenadas = [...acometidasUnidas].sort(compararOrdenRuta);
+      setAcometidas(ordenadas);
+      return ordenadas;
     } catch (error) {
       console.error('Error cargando datos:', error);
       alert('Error al conectar con Supabase: ' + error.message);
+      return [];
     } finally {
       setLoading(false);
     }
@@ -155,6 +164,31 @@ export function useAcometidas() {
     }
 
     await cargarTodo({ silencioso: true });
+  }
+
+  async function ubicarEnRuta(acometidaId, despuesDeId) {
+    const actual = acometidas.find((a) => a.id === acometidaId);
+    if (!actual?.zona_id) {
+      alert('Esta acometida no tiene zona asignada para reordenar la ruta.');
+      return;
+    }
+
+    try {
+      const zona = acometidasDeLaZona(acometidas, actual.zona_id);
+      await reubicarEnRutaZona({
+        acometidasZona: zona,
+        acometidaId,
+        despuesDeId
+      });
+      const actualizadas = await cargarTodo({ silencioso: true });
+      if (acometidaActiva?.id === acometidaId) {
+        const fresca = actualizadas.find((a) => a.id === acometidaId);
+        if (fresca) setAcometidaActiva(fresca);
+      }
+    } catch (error) {
+      console.error('Error reordenando ruta:', error);
+      alert('Error al actualizar el orden de ruta: ' + error.message);
+    }
   }
 
   async function handleGuardarLectura(e) {
@@ -244,18 +278,20 @@ export function useAcometidas() {
   }
 
   const acometidasFiltradas = useMemo(() => {
-    return acometidas.filter((a) => {
-      const cumpleZona = filtroZona === 'TODAS' || String(a.zona_id) === String(filtroZona);
-      const term = busqueda.toLowerCase().trim();
-      const cumpleBusqueda =
-        !term ||
-        String(a.numero_servicio).includes(term) ||
-        a.nombre_beneficiario.toLowerCase().includes(term) ||
-        String(a.medidor_numero || '').toLowerCase().includes(term) ||
-        a.nombre_caserio.toLowerCase().includes(term);
+    return acometidas
+      .filter((a) => {
+        const cumpleZona = filtroZona === 'TODAS' || String(a.zona_id) === String(filtroZona);
+        const term = busqueda.toLowerCase().trim();
+        const cumpleBusqueda =
+          !term ||
+          String(a.numero_servicio).includes(term) ||
+          a.nombre_beneficiario.toLowerCase().includes(term) ||
+          String(a.medidor_numero || '').toLowerCase().includes(term) ||
+          a.nombre_caserio.toLowerCase().includes(term);
 
-      return cumpleZona && cumpleBusqueda;
-    });
+        return cumpleZona && cumpleBusqueda;
+      })
+      .sort(compararOrdenRuta);
   }, [acometidas, filtroZona, busqueda]);
 
   const acometidasEnRuta = acometidasFiltradas.filter((a) => a.activo !== false);
@@ -319,6 +355,7 @@ export function useAcometidas() {
     cerrarCaptura,
     capturarUbicacionGps,
     handleGuardarLectura,
-    toggleActivoAcometida
+    toggleActivoAcometida,
+    ubicarEnRuta
   };
 }

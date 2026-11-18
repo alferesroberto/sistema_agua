@@ -10,10 +10,12 @@ export default function Navbar({
   onActualizar,
   onCerrarSesion,
   preferencia,
-  onCambiarTema
+  onCambiarTema,
+  onAbrirLegal
 }) {
   const tabs = [
     { id: 'ruta', label: 'Ruta' },
+    { id: 'nueva', label: '+ Nueva' },
     { id: 'dashboard', label: 'Dashboard' },
     { id: 'mapa', label: 'Mapa GPS' },
     { id: 'reportes', label: `Alertas (${casosAtencion})` }
@@ -30,6 +32,9 @@ export default function Navbar({
         </div>
         <div className="navbar-acciones">
           <TemaToggle preferencia={preferencia} onCambiar={onCambiarTema} />
+          <button type="button" className="btn" onClick={onAbrirLegal}>
+            Legal
+          </button>
           <button type="button" className="btn" onClick={onActualizar}>
             Actualizar
           </button>

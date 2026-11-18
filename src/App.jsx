@@ -8,6 +8,8 @@ import DashboardView from './views/DashboardView';
 import RutaLecturaView from './views/RutaLecturaView';
 import MapaView from './views/MapaView';
 import ReportesView from './views/ReportesView';
+import LegalView from './views/LegalView';
+import NuevaAcometidaView from './views/NuevaAcometidaView'; // <--- Importado
 
 export default function App() {
   const [sesion, setSesion] = useState(undefined);
@@ -52,6 +54,7 @@ export default function App() {
 
 function AppAutenticada({ onCerrarSesion, tema }) {
   const [vistaActiva, setVistaActiva] = useState('ruta');
+  const [mostrarLegal, setMostrarLegal] = useState(false);
   const datos = useAcometidas();
 
   function cambiarVista(id) {
@@ -82,7 +85,9 @@ function AppAutenticada({ onCerrarSesion, tema }) {
     onVolver: datos.cerrarCaptura,
     onCapturarGps: datos.capturarUbicacionGps,
     onGuardar: datos.handleGuardarLectura,
-    onToggleActivo: datos.toggleActivoAcometida
+    onToggleActivo: datos.toggleActivoAcometida,
+    acometidas: datos.acometidas,
+    onUbicarEnRuta: datos.ubicarEnRuta
   };
 
   return (
@@ -98,9 +103,24 @@ function AppAutenticada({ onCerrarSesion, tema }) {
         onCerrarSesion={onCerrarSesion}
         preferencia={tema.preferencia}
         onCambiarTema={tema.setPreferencia}
+        onAbrirLegal={() => setMostrarLegal(true)}
       />
 
-      {vistaActiva === 'ruta' && (
+      {mostrarLegal && <LegalView onCerrar={() => setMostrarLegal(false)} />}
+
+      {!mostrarLegal && vistaActiva === 'nueva' && (
+        <NuevaAcometidaView
+          zonas={datos.zonas}
+          acometidas={datos.acometidas}
+          onGuardado={() => {
+            datos.cargarTodo();
+            setVistaActiva('ruta');
+          }}
+          onCancelar={() => setVistaActiva('ruta')}
+        />
+      )}
+
+      {!mostrarLegal && vistaActiva === 'ruta' && (
         <RutaLecturaView
           zonas={datos.zonas}
           acometidas={datos.acometidas}
@@ -114,11 +134,13 @@ function AppAutenticada({ onCerrarSesion, tema }) {
           acometidaActiva={datos.acometidaActiva}
           abrirCaptura={datos.abrirCaptura}
           toggleActivoAcometida={datos.toggleActivoAcometida}
+          ubicarEnRuta={datos.ubicarEnRuta}
           capturaProps={capturaProps}
+          onIrANueva={() => setVistaActiva('nueva')} // <--- Opcional para poner un botón rápido en la vista de ruta
         />
       )}
 
-      {vistaActiva === 'dashboard' && (
+      {!mostrarLegal && vistaActiva === 'dashboard' && (
         <DashboardView
           acometidas={datos.acometidasActivas}
           totalActivos={datos.totalActivos}
@@ -128,7 +150,7 @@ function AppAutenticada({ onCerrarSesion, tema }) {
         />
       )}
 
-      {vistaActiva === 'mapa' && (
+      {!mostrarLegal && vistaActiva === 'mapa' && (
         <MapaView
           zonas={datos.zonas}
           acometidas={datos.acometidasActivas}
@@ -138,7 +160,7 @@ function AppAutenticada({ onCerrarSesion, tema }) {
         />
       )}
 
-      {vistaActiva === 'reportes' && (
+      {!mostrarLegal && vistaActiva === 'reportes' && (
         <ReportesView
           acometidas={datos.acometidasActivas}
           casosAtencion={datos.casosAtencion}

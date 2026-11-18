@@ -1,3 +1,5 @@
+import OrdenRutaPanel from './OrdenRutaPanel';
+
 export default function ModalCaptura({
   acometidaActiva,
   lecturaActual,
@@ -18,7 +20,9 @@ export default function ModalCaptura({
   onVolver,
   onCapturarGps,
   onGuardar,
-  onToggleActivo
+  onToggleActivo,
+  acometidas,
+  onUbicarEnRuta
 }) {
   return (
     <div className="captura">
@@ -37,7 +41,8 @@ export default function ModalCaptura({
 
       <div className="ficha-servicio">
         <div className="codigo">
-          Servicio No. {acometidaActiva.numero_servicio} | Medidor: {acometidaActiva.medidor_numero || 'S/N'}
+          Ruta #{acometidaActiva.orden_ruta ?? '—'} · Servicio No. {acometidaActiva.numero_servicio} | Medidor:{' '}
+          {acometidaActiva.medidor_numero || 'S/N'}
         </div>
         <h3>{acometidaActiva.nombre_beneficiario}</h3>
         <div style={{ fontSize: '0.85rem', color: 'var(--texto-suave)' }}>
@@ -47,6 +52,8 @@ export default function ModalCaptura({
           Lectura Anterior (Octubre): <b>{acometidaActiva.lectura_base}</b>
         </div>
       </div>
+
+      <OrdenRutaPanel acometida={acometidaActiva} acometidas={acometidas || []} onUbicar={onUbicarEnRuta} />
 
       <form onSubmit={onGuardar} className="form-col">
         <div>
