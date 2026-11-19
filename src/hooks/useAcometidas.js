@@ -228,8 +228,6 @@ export function useAcometidas() {
         }
       }
 
-      const consumoCalculado = Math.max(lecturaActNum - lecturaAntNum, 0);
-
       const { error: insertErr } = await supabase.from('lecturas_mensuales').insert([
         {
           acometida_id: acometidaActiva.id,
@@ -237,7 +235,6 @@ export function useAcometidas() {
           periodo_anio: PERIODO_ANIO,
           lectura_anterior: lecturaAntNum,
           lectura_actual: lecturaActNum,
-          consumo_m3: consumoCalculado,
           estado_medidor_reportado: estadoMedidor,
           requiere_atencion: requiereAtencion,
           observaciones: observaciones.trim() || null,
