@@ -201,11 +201,12 @@ export default function NuevaAcometidaView({ zonas, acometidas, onGuardado, onCa
               Orden en Ruta (Secuencia)
             </label>
             <input
-              type="number"
-              value={ordenRuta}
-              onChange={(e) => setOrdenRuta(e.target.value)}
-              placeholder="Ej. 15"
-              style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', boxSizing: 'border-box' }}
+                type="number"
+                step="any"
+                value={ordenRuta}
+                onChange={(e) => setOrdenRuta(e.target.value)}
+                placeholder="Ej. 15 o 505.1"
+                style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #d1d5db', boxSizing: 'border-box' }}
             />
           </div>
         </div>
