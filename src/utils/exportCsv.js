@@ -29,13 +29,13 @@ function obtenerNumeroServicio(item) {
 export function ordenarPorRuta(items = []) {
   return [...items].sort((a, b) => {
     // 1. Si deseas agrupar primero por zona y caserío, descomenta estas líneas:
-    // const zonaA = String(a?.nombre_zona ?? '');
-    // const zonaB = String(b?.nombre_zona ?? '');
-    // if (zonaA !== zonaB) return zonaA.localeCompare(zonaB, 'es', { numeric: true });
+   const zonaA = String(a?.nombre_zona ?? '');
+   const zonaB = String(b?.nombre_zona ?? '');
+    if (zonaA !== zonaB) return zonaA.localeCompare(zonaB, 'es', { numeric: true });
     //
-    // const caserioA = String(a?.nombre_caserio ?? '');
-    // const caserioB = String(b?.nombre_caserio ?? '');
-    // if (caserioA !== caserioB) return caserioA.localeCompare(caserioB, 'es', { numeric: true });
+   const caserioA = String(a?.nombre_caserio ?? '');
+   const caserioB = String(b?.nombre_caserio ?? '');
+   if (caserioA !== caserioB) return caserioA.localeCompare(caserioB, 'es', { numeric: true });
 
     // 2. Orden principal por orden_ruta
     const rutaA = obtenerOrdenRuta(a);
